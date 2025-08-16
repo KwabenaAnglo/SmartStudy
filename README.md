@@ -1,51 +1,129 @@
+# Lucide React
 
-# TypeScript
+Implementation of the lucide icon library for react applications.
 
-[![GitHub Actions CI](https://github.com/microsoft/TypeScript/workflows/CI/badge.svg)](https://github.com/microsoft/TypeScript/actions?query=workflow%3ACI)
-[![Devops Build Status](https://dev.azure.com/typescript/TypeScript/_apis/build/status/Typescript/node10)](https://dev.azure.com/typescript/TypeScript/_build?definitionId=7)
-[![npm version](https://badge.fury.io/js/typescript.svg)](https://www.npmjs.com/package/typescript)
-[![Downloads](https://img.shields.io/npm/dm/typescript.svg)](https://www.npmjs.com/package/typescript)
+> What is lucide? Read it [here](https://github.com/lucide-icons/lucide#what-is-lucide).
 
-[TypeScript](https://www.typescriptlang.org/) is a language for application-scale JavaScript. TypeScript adds optional types to JavaScript that support tools for large-scale JavaScript applications for any browser, for any host, on any OS. TypeScript compiles to readable, standards-based JavaScript. Try it out at the [playground](https://www.typescriptlang.org/play/), and stay up to date via [our blog](https://blogs.msdn.microsoft.com/typescript) and [Twitter account](https://twitter.com/typescript).
+## Installation
 
-Find others who are using TypeScript at [our community page](https://www.typescriptlang.org/community/).
-
-## Installing
-
-For the latest stable version:
-
-```bash
-npm install -g typescript
+```sh
+yarn add lucide-react
 ```
 
-For our nightly builds:
+or
 
-```bash
-npm install -g typescript@next
+```sh
+npm install lucide-react
 ```
 
-## Contribute
+## How to use
 
-There are many ways to [contribute](https://github.com/microsoft/TypeScript/blob/main/CONTRIBUTING.md) to TypeScript.
-* [Submit bugs](https://github.com/microsoft/TypeScript/issues) and help us verify fixes as they are checked in.
-* Review the [source code changes](https://github.com/microsoft/TypeScript/pulls).
-* Engage with other TypeScript users and developers on [StackOverflow](https://stackoverflow.com/questions/tagged/typescript).
-* Help each other in the [TypeScript Community Discord](https://discord.gg/typescript).
-* Join the [#typescript](https://twitter.com/search?q=%23TypeScript) discussion on Twitter.
-* [Contribute bug fixes](https://github.com/microsoft/TypeScript/blob/main/CONTRIBUTING.md).
-* Read the archived language specification ([docx](https://github.com/microsoft/TypeScript/blob/main/doc/TypeScript%20Language%20Specification%20-%20ARCHIVED.docx?raw=true),
- [pdf](https://github.com/microsoft/TypeScript/blob/main/doc/TypeScript%20Language%20Specification%20-%20ARCHIVED.pdf?raw=true), [md](https://github.com/microsoft/TypeScript/blob/main/doc/spec-ARCHIVED.md)).
+It's built with ES modules so it's completely tree-shakable.
+Each icon can be imported as a react component.
 
-This project has adopted the [Microsoft Open Source Code of Conduct](https://opensource.microsoft.com/codeofconduct/). For more information see
-the [Code of Conduct FAQ](https://opensource.microsoft.com/codeofconduct/faq/) or contact [opencode@microsoft.com](mailto:opencode@microsoft.com)
-with any additional questions or comments.
+### Example
 
-## Documentation
+You can pass additional props to adjust the icon.
 
-*  [TypeScript in 5 minutes](https://www.typescriptlang.org/docs/handbook/typescript-in-5-minutes.html)
-*  [Programming handbook](https://www.typescriptlang.org/docs/handbook/intro.html)
-*  [Homepage](https://www.typescriptlang.org/)
+```js
+import { Camera } from 'lucide-react';
 
-## Roadmap
+const App = () => {
+  return <Camera color="red" size={48} />;
+};
 
-For details on our planned features and future direction please refer to our [roadmap](https://github.com/microsoft/TypeScript/wiki/Roadmap).
+export default App;
+```
+
+### Props
+
+| name          | type     | default      |
+| ------------- | -------- | ------------ |
+| `size`        | _Number_ | 24           |
+| `color`       | _String_ | currentColor |
+| `strokeWidth` | _Number_ | 2            |
+
+### Custom props
+
+You can also pass custom props that will be added in the svg as attributes.
+
+```js
+const App = () => {
+  return <Camera fill="red" />;
+};
+```
+
+### Generic icon component
+
+It is possible to create a generic icon component to load icons.
+
+> :warning: The example below is importing all ES modules. This is **not** recommended when you using a bundler since your application build size will grow substantially.
+
+```js
+import { icons } from 'lucide-react';
+
+const Icon = ({ name, color, size }) => {
+  const LucideIcon = icons[name];
+
+  return <LucideIcon color={color} size={size} />;
+};
+
+export default Icon;
+```
+
+#### With Dynamic Imports
+
+> :warning: This is experimental and only works with bundlers that support dynamic imports.
+
+Lucide react exports a dynamic import map `dynamicIconImports`. Useful for applications that want to show icons dynamically by icon name. For example when using a content management system with where icon names are stored in a database.
+
+When using client side rendering, it will fetch the icon component when it's needed. This will reduce the initial bundle size.
+
+The keys of the dynamic import map are the lucide original icon names.
+
+Example with React suspense:
+
+```tsx
+import React, { lazy, Suspense } from 'react';
+import { dynamicIconImports, LucideProps } from 'lucide-react';
+
+const fallback = <div style={{ background: '#ddd', width: 24, height: 24 }}/>
+
+interface IconProps extends Omit<LucideProps, 'ref'> {
+  name: keyof typeof dynamicIconImports;
+}
+
+const Icon = ({ name, ...props }: IconProps) => {
+  const LucideIcon = lazy(dynamicIconImports[name]);
+
+  return (
+    <Suspense fallback={fallback}>
+      <LucideIcon {...props} />
+    </Suspense>
+  );
+}
+
+export default Icon
+```
+
+##### NextJS Example
+
+In NextJS [the dynamic function](https://nextjs.org/docs/pages/building-your-application/optimizing/lazy-loading#nextdynamic) can be used to load the icon component dynamically.
+
+```tsx
+import dynamic from 'next/dynamic'
+import { LucideProps } from 'lucide-react';
+import dynamicIconImports from 'lucide-react/dynamicIconImports';
+
+interface IconProps extends LucideProps {
+  name: keyof typeof dynamicIconImports;
+}
+
+const Icon = ({ name, ...props }: IconProps) => {
+  const LucideIcon = dynamic(dynamicIconImports[name])
+
+  return <LucideIcon {...props} />;
+};
+
+export default Icon;
+```
